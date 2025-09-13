@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth, redirectToSignIn } from "@clerk/nextjs";
-import { ajGeneral, ajStrict } from "./lib/arcjet";
+import aj from "./lib/arcjet"; // Import Arcjet client
 
 function isProtectedRoute(pathname) {
   return (
@@ -11,20 +11,15 @@ function isProtectedRoute(pathname) {
 }
 
 export default async function middleware(req) {
-  const pathname = new URL(req.url).pathname;
-
-  // Pick Arcjet client based on route
-  const ajClient = pathname.startsWith("/api") ? ajStrict : ajGeneral;
-
-  // Run Arcjet
-  const decision = await ajClient.protect(req);
+  // Run Arcjet first
+  const decision = await aj.protect(req);
   if (decision.isDenied()) {
     return decision.toResponse();
   }
 
-  // Run Clerk (only for protected dashboard/account/transaction)
+  // Run Clerk
   const { userId } = auth();
-  if (!userId && isProtectedRoute(pathname)) {
+  if (!userId && isProtectedRoute(new URL(req.url).pathname)) {
     return redirectToSignIn({ returnBackUrl: req.url });
   }
 
@@ -36,6 +31,6 @@ export const config = {
     "/dashboard/:path*",
     "/account/:path*",
     "/transaction/:path*",
-    "/api/:path*",
+    "/(api|trpc)(.*)",
   ],
 };
