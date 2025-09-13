@@ -20,8 +20,7 @@ const clerk = clerkMiddleware(async (auth, req) => {
   return NextResponse.next();
 });
 
-// Chain middlewares -  Clerk
-export default createMiddleware( clerk);
+
 
 export const config = {
   matcher: [
