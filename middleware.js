@@ -1,51 +1,49 @@
+import arcjet, { shield, detectBot } from "@arcjet/next";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { auth, redirectToSignIn } from "@clerk/nextjs";
-import { ajGeneral, ajStrict } from "./lib/arcjet";
 
-function isProtectedRoute(pathname) {
-  return (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/transaction")
-  );
-}
+const isProtectedRoute = createRouteMatcher([
+  "/dashboard(.*)",
+  "/account(.*)",
+  "/transaction(.*)",
+]);
 
-export default async function middleware(req) {
-  const pathname = new URL(req.url).pathname;
+const aj = arcjet({
+  key: process.env.ARCJET_KEY,
+  rules: [
+    shield({ mode: "LIVE" }),
+    detectBot({
+      mode: "LIVE",
+      allow: [
+        "CATEGORY:SEARCH_ENGINE",
+        "GO_HTTP",
+      ],
+    }),
+  ],
+});
 
-  // Pick Arcjet config based on route
-  const ajClient = pathname.startsWith("/api") ? ajStrict : ajGeneral;
-
-  // ✅ Arcjet check
-  const decision = await ajClient.protect(req);
-
-  // Log in dev mode for visibility
-  if (process.env.NODE_ENV !== "production") {
-    console.log("Arcjet decision:", {
-      allowed: decision.isAllowed(),
-      denied: decision.isDenied(),
-      reason: decision.reason,
-    });
+const clerk = clerkMiddleware(async (auth, req) => {
+  const { userId } = await auth();
+  if (!userId && isProtectedRoute(req)) {
+    // Redirect manually to sign-in page
+    return NextResponse.redirect("/sign-in");
   }
-
-  if (decision.isDenied()) {
-    return decision.toResponse();
-  }
-
-  // ✅ Clerk protection (only for certain routes)
-  const { userId } = auth();
-  if (!userId && isProtectedRoute(pathname)) {
-    return redirectToSignIn({ returnBackUrl: req.url });
-  }
-
   return NextResponse.next();
+});
+
+// Only export one middleware, combine logic if possible
+export default async function middleware(req) {
+  // Arcjet protection
+  const arcjetResult = await aj(req);
+  if (arcjetResult) return arcjetResult;
+
+  // Clerk protection
+  return clerk(req);
 }
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/account/:path*",
-    "/transaction/:path*",
-    "/api/:path*",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
   ],
 };
