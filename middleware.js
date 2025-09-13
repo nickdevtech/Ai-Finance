@@ -16,13 +16,23 @@ export default async function middleware(req) {
   // Pick Arcjet config based on route
   const ajClient = pathname.startsWith("/api") ? ajStrict : ajGeneral;
 
-  // Arcjet check
+  // ✅ Arcjet check
   const decision = await ajClient.protect(req);
+
+  // Log in dev mode for visibility
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Arcjet decision:", {
+      allowed: decision.isAllowed(),
+      denied: decision.isDenied(),
+      reason: decision.reason,
+    });
+  }
+
   if (decision.isDenied()) {
     return decision.toResponse();
   }
 
-  // Clerk protection (only for certain routes)
+  // ✅ Clerk protection (only for certain routes)
   const { userId } = auth();
   if (!userId && isProtectedRoute(pathname)) {
     return redirectToSignIn({ returnBackUrl: req.url });
