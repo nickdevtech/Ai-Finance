@@ -1,4 +1,3 @@
-
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -8,8 +7,7 @@ const isProtectedRoute = createRouteMatcher([
   "/transaction(.*)",
 ]);
 
-// Create base Clerk middleware
-const clerk = clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
   if (!userId && isProtectedRoute(req)) {
@@ -19,8 +17,6 @@ const clerk = clerkMiddleware(async (auth, req) => {
 
   return NextResponse.next();
 });
-
-
 
 export const config = {
   matcher: [
