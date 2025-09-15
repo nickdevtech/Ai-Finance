@@ -50,22 +50,7 @@ cd <repo>
 npm install
 ```
 
-### 3. Setup environment variables
-
-Copy `.env.example` to `.env.local` and fill in required keys (see below).
-
-```bash
-cp .env.example .env.local
-```
-
-### 4. Database setup
-
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-### 5. Run the development server
+### 3. Run the development server
 
 ```bash
 npm run dev
@@ -75,16 +60,6 @@ Open `http://localhost:3000`
 
 ---
 
-
-## 🗄 Database (Supabase + Prisma)
-
-* Schema defined in `prisma/schema.prisma`
-* Pull schema from existing DB: `npx prisma db pull`
-* Push schema changes: `npx prisma db push`
-* Use migrations for versioned schema changes: `npx prisma migrate dev`
-* Optional: seed initial data with `prisma/seed.ts`
-
----
 
 ## 🔐 Authentication (Clerk)
 
