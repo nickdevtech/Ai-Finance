@@ -1,4 +1,4 @@
-# AI Finance Platform
+# AI WealthWise
 
 A **Full Stack AI-Powered Finance Platform** built with **React 19, Next.js 15, Tailwind CSS, Supabase, Prisma, Clerk Authentication, Inngest, and shadcn/ui**. This project is a modern personal finance management system that enables users to track expenses, manage multiple accounts, automate recurring transactions, and analyze financial health with AI assistance.
 
