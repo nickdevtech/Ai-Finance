@@ -39,6 +39,7 @@ export async function createTransaction(data) {
 
     // Calculate new balance
     const balanceChange = data.type === "EXPENSE" ? -data.amount : data.amount;
+
     const newBalance = account.balance.toNumber() + balanceChange;
 
     // Create transaction and update account balance
@@ -56,7 +57,9 @@ export async function createTransaction(data) {
 
       await tx.account.update({
         where: { id: data.accountId },
-        data: { balance: newBalance },
+        data: {
+          balance: newBalance,
+        },
       });
 
       return newTransaction;
@@ -65,7 +68,10 @@ export async function createTransaction(data) {
     revalidatePath("/dashboard");
     revalidatePath(`/account/${transaction.accountId}`);
 
-    return { success: true, data: serializeAmount(transaction) };
+    return {
+      success: true,
+      data: serializeAmount(transaction),
+    };
   } catch (error) {
     throw new Error(error.message);
   }
@@ -226,7 +232,7 @@ export async function scanReceipt(file) {
         "category": "string"
       }
 
-      If its not a receipt, return an empty object
+      If its not a recipt, return an empty object
     `;
 
     const result = await model.generateContent([
