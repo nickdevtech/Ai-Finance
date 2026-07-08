@@ -14,32 +14,27 @@ const aj = arcjet({
     shield({ mode: "LIVE" }),
     detectBot({
       mode: "LIVE",
-      allow: [
-        "CATEGORY:SEARCH_ENGINE",
-        "GO_HTTP",
-      ],
+      allow: ["CATEGORY:SEARCH_ENGINE", "GO_HTTP"],
     }),
   ],
 });
 
-const clerk = clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
-  if (!userId && isProtectedRoute(req)) {
-    // Redirect manually to sign-in page
-    return NextResponse.redirect("/sign-in");
+export default clerkMiddleware(async (auth, req) => {
+  // Arcjet first
+  const arcjetResult = await aj(req);
+  if (arcjetResult) {
+    return arcjetResult;
   }
+
+  // Clerk auth
+  const { userId } = await auth();
+
+  if (!userId && isProtectedRoute(req)) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
   return NextResponse.next();
 });
-
-// Only export one middleware, combine logic if possible
-export default async function middleware(req) {
-  // Arcjet protection
-  const arcjetResult = await aj(req);
-  if (arcjetResult) return arcjetResult;
-
-  // Clerk protection
-  return clerk(req);
-}
 
 export const config = {
   matcher: [
