@@ -73,34 +73,39 @@ export async function createAccount(data) {
       where: { userId: user.id },
     });
 
-    // If it's the first account, make it default regardless of user input
-    // If not, use the user's preference
+    // If it's the first account, make it default
     const shouldBeDefault =
       existingAccounts.length === 0 ? true : data.isDefault;
 
-    // If this account should be default, unset other default accounts
+    // Unset previous default account
     if (shouldBeDefault) {
       await db.account.updateMany({
-        where: { userId: user.id, isDefault: true },
-        data: { isDefault: false },
+        where: {
+          userId: user.id,
+          isDefault: true,
+        },
+        data: {
+          isDefault: false,
+        },
       });
     }
 
-    // Create new account
+    // Create account
     const account = await db.account.create({
       data: {
         ...data,
         balance: balanceFloat,
         userId: user.id,
-        isDefault: shouldBeDefault, // Override the isDefault based on our logic
+        isDefault: shouldBeDefault,
       },
     });
 
-    // Serialize the account before returning
-    const serializedAccount = serializeTransaction(account);
-
     revalidatePath("/dashboard");
-    return { success: true, data: serializedAccount };
+
+    return {
+      success: true,
+      data: serializeTransaction(account),
+    };
   } catch (error) {
     throw new Error(error.message);
   }
